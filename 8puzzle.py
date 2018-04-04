@@ -269,7 +269,7 @@ def test():
         if mine==0 or best==0:
             continue
         arr.append(mine/best)
-    return sum(arr)/len(best)
+    return sum(arr)/len(arr)
 
 
 
