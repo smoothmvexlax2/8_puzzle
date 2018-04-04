@@ -1,3 +1,4 @@
+import itertools
 from TreeNode import Node, Tree, GOAL_STATE
 
 class Game:
@@ -58,8 +59,8 @@ class Game:
 def play(data, treedepth=10):
     game = Game(initial=data)
     if not game.isSolvable():
-        print("not solvable")
-        return
+        #print("not solvable")
+        return 0
     tree = Tree(data=game.getCurrentBoard())
     depth = treedepth
     iterdepth = treedepth
@@ -79,15 +80,15 @@ def play(data, treedepth=10):
                 while move.getParent():
                     move = move.getParent()
                     stack.append(move.data)
-                while stack:
+                while len(stack)>1:
                     game.addMove(stack.pop())
                 #---------------------------
                 #this returns the path to the solution found. 
                 #the stack is the best solution given the initial state for
                 #the last move found outside the current while loop
                 #---------------------------
-                print(game)
-                return
+                #print(game)
+                return game.countMoves
         if isGoal(move.data):
                 stack = [move.data]
                 while move.getParent():
@@ -102,7 +103,9 @@ def play(data, treedepth=10):
     #---------------------------
     #This print statement is if the game has no local mins
     #---------------------------
-    print(game)
+    
+    return game.countMoves
+    #print(game)
     
 
     
@@ -241,3 +244,40 @@ def createChildren(root, maxdepth):
             que = gen
             if len(mem) >= maxdepth:
                 que=[]
+
+def test():
+    boards = list(itertools.permutations([0,1, 2, 3, 4, 5, 6, 7, 8]))
+    allboards = {}
+    boardcount = 0
+    for x in boards:
+        boardcount +=1
+        boardlist = []
+        mylist = []
+        count = 1
+        for index in x:
+            mylist.append(index)
+            if count%3==0:
+                boardlist.append(mylist)
+                mylist = []
+            count +=1
+        allboards['board'+str(boardcount)]=boardlist
+        
+    arr=[]
+    for key in allboards.keys():
+        mine = play(allboards[key])
+        best = play(allboards[key], treedepth=999)
+        if mine==0 or best==0:
+            continue
+        arr.append(mine/best)
+    return sum(arr)/len(best)
+
+
+
+
+
+
+
+
+
+
+
