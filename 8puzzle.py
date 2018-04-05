@@ -1,4 +1,6 @@
 import itertools
+import gc
+import pickle
 from TreeNode import Node, Tree, GOAL_STATE
 
 class Game:
@@ -35,10 +37,11 @@ class Game:
         
     def isSolvable(self):
         data = self.getCurrentBoard()
+        flatten = list(itertools.chain.from_iterable(data))
         inverse = 0
-        for row in range(len(data)):
-            for col in range(row+1,len(data)):
-                if data[col]!=0 and data[row]!=0 and data[row]>data[col]:
+        for index in range(len(flatten)):
+            for ind2 in range(index+1,len(flatten)):
+                if flatten[index]!=0 and flatten[ind2]!=0 and flatten[index]>flatten[ind2]:
                     inverse +=1
         return(inverse%2==0)
     
@@ -59,7 +62,7 @@ class Game:
 def play(data, treedepth=10):
     game = Game(initial=data)
     if not game.isSolvable():
-        #print("not solvable")
+#        print("not solvable")
         return 0
     tree = Tree(data=game.getCurrentBoard())
     depth = treedepth
@@ -148,8 +151,7 @@ def findNextMove(tree):
     while minnode.getParent() is not tree.root:
         minnode = minnode.getParent()
     return minnode
-                
-    
+                 
 def createState(data, r0, c0, r1, c1):
     num = data[r1][c1]
     state = []
@@ -178,7 +180,7 @@ def createChildren(root, maxdepth):
         que, mem = [root], []
         while que:
             gen = []
-            cost = 0 if not mem else cost+1
+#            cost = 0 if not mem else cost+1
             #------------------------------
             #need to edit for cost of each move
             #------------------------------
@@ -245,8 +247,9 @@ def createChildren(root, maxdepth):
             if len(mem) >= maxdepth:
                 que=[]
 
-def test():
-    boards = list(itertools.permutations([0,1, 2, 3, 4, 5, 6, 7, 8]))
+def createPlayableBoards():
+    boards = list(itertools.permutations([0, 1, 2, 3, 4, 5, 6, 7, 8]))
+    #all possible board configurations
     allboards = {}
     boardcount = 0
     for x in boards:
@@ -255,25 +258,59 @@ def test():
         mylist = []
         count = 1
         for index in x:
+            #configuring the boards as 3x3 list
             mylist.append(index)
             if count%3==0:
                 boardlist.append(mylist)
                 mylist = []
             count +=1
         allboards['board'+str(boardcount)]=boardlist
-        
-    arr=[]
+    
+    playable = {}
+    boardcounts = {}
+    boardcount=0
     for key in allboards.keys():
-        mine = play(allboards[key])
-        best = play(allboards[key], treedepth=999)
-        if mine==0 or best==0:
+        #now looking for the boards which have a solution
+        #using default limited depth of 10 to save time and space
+        result = play(allboards[key])
+        if result!=0:
+            boardcount +=1
+            boardcounts['board'+str(boardcount)+'_moves']=result
+            playable['board'+str(boardcount)]=allboards[key]
+            if boardcount%20==0:
+            #during testing, large tree depths filled RAM 
+                gc.collect()
+    savedata(playable, '8puzzle_boards')#playable boards
+    savedata(boardcounts, '8puzzle_board_moves_depth_10')
+    # playable boards' number of moves with default
+                   
+            
+def movesTest(depth=None):
+    #given a depth for the tree (depth), go through all the playable boards and
+    #create a file for the number of moves taken
+    allboards = pickle.load(open('8puzzle_boards.pickle', 'rb'))
+    depth = 10 if not depth else depth
+         
+    boardcounts = {}
+    garbagecount=0
+    for key in allboards.keys():
+        moves = play(allboards[key], treedepth=depth)
+        if moves==0:
             continue
-        arr.append(mine/best)
-    return sum(arr)/len(arr)
+        boardcounts[key+'_moves']=moves
+        garbagecount +=1
+        if garbagecount%20==0:
+            #during testing, large tree depths filled RAM 
+            gc.collect()
+    
+    savedata(boardcounts, '8puzzle_board_moves_depth_'+str(depth))
 
-
-
-
+def savedata(data, fname):
+    nfile = fname + '.pickle'          
+    pickle_out = open(nfile,'wb')#'wb' writing the pickled dataframe as bytes
+    pickle.dump(data, pickle_out)#dumping the bytes to open pickle file
+    pickle_out.close()
+#data = pickle.load(open('filename.pickle', 'rb'))
 
 
 
