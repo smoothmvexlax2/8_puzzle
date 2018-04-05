@@ -41,5 +41,8 @@ play([[5,2,0],[1,6,4],[3,7,8]])
  [4, 5, 6] 
  [7, 8, 0] 
  
+# Currently Testing Peformance 
+I am comparing my programs results with the optimal result with all possible solvable boards. I am hoping for less than 3% error on average.
 # Possible continuation
-May build off this program and apply it too 15-puzzle
+May build off this program and apply it too 15-puzzle.
+
